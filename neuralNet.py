@@ -23,15 +23,7 @@ class Network(object):
   
   def Cost(self, X, y, lmbda):
     m = len(y)
-    # Bias
-    ones = np.ones((m,1))
-    # A;adir el bias
-    a1 = np.hstack((ones, X))
-    a2 = utils.sigmoid(a1 @ self.weights[0].T)
-    a2 = np.hstack((ones, a2))
-    # Sacar la hipotesis
-    h = utils.sigmoid(a2 @ self.weights[1].T)
-    print(h[0][:,np.newaxis])
+    a1, z2, a2, z3, h = self.feedForward(X)
     # Funcion de costo y*log(h) - (1-y)*log(1-h)
     J = (np.multiply(-y, np.log(h)) - np.multiply((1 - y), np.log(1 - h))).sum() / m
     # Tomar en cuenta el learning rate + lmda/2m * suma de thetas^2
@@ -44,12 +36,17 @@ class Network(object):
     ones = np.ones((m,1))
     # A;adir el bias
     a1 = np.hstack((ones, X))
-    a2 = utils.sigmoid(a1 @ self.weights[0].T)
-    a2 = np.hstack((ones, a2))
+    z2 = a1 @ self.weights[0].T
+    a2 = np.hstack((ones, utils.sigmoid(z2)))
+    z3 = a2 @ self.weights[1].T
     # Sacar la hipotesis
-    h = utils.sigmoid(a2 @ self.weights[1].T)
-    return h
-
+    h = utils.sigmoid(z3)
+    return a1, z2, a2, z3, h
+  
+  def backProp(self):
+    pass
+  
+  
 net = Network([5, 3, 3])
 y = np.array([[1],[2],[3],[1],[2]])
 x = np.array([[1,2,3,4,5],[2,3,5,4,8],[8,8,9,8,4],[1,5,8,6,9],[1,5,6,8,9]])
