@@ -43,11 +43,34 @@ class Network(object):
     h = utils.sigmoid(z3)
     return a1, z2, a2, z3, h
   
-  def backProp(self):
-    pass
-  
+  def backProp(self, X, y):
+    ones = np.ones(1)
+    a1, z2, a2, z3, h = self.feedForward(X)
+    m = len(X)
+    delta1 = np.zeros(self.weights[0].shape)  # (25, 401)
+    delta2 = np.zeros(self.weights[1].shape) # (10, 26)
+    output = utils.sigmoid(z3)
+    for i in range(m):
+      a1i = a1[i, :]
+      z2i = z2[i, :]
+      a2i = a2[i, :]
+      hi = h[i, :]
+      outputi = output[i, :]
+      yi = y[i, :]
+
+      diff = outputi - y[i][np.newaxis,:]
+      z2i = np.hstack((ones, z2i))
+      print((self.weights[1].T @ diff.T).shape)
+      d2 = np.multiply(self.weights[1].T @ diff.T, utils.sigmoid_prime(z2i)[:,np.newaxis])
+      delta1 = delta1 + d2[1:,:] @ a1i[np.newaxis,:]
+      delta2 = delta2 + diff.T @ a2i[np.newaxis,:]
+        
+    delta1 /= m
+    delta2 /= m
   
 net = Network([5, 3, 3])
-y = np.array([[1],[2],[3],[1],[2]])
+y = np.array([[0],[1],[2],[0],[1]])
+y_d = utils.vectorized_result(y, 3)
 x = np.array([[1,2,3,4,5],[2,3,5,4,8],[8,8,9,8,4],[1,5,8,6,9],[1,5,6,8,9]])
-print(net.Cost(x, y, 1))
+print(net.Cost(x, y_d, 1))
+net.backProp(x,y_d)
