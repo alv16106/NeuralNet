@@ -31,7 +31,7 @@ class Network(object):
     return J
 
   def feedForward(self, X):
-    m = len(X)
+    m = X.shape[0]
     # Bias
     ones = np.ones((m,1))
     # A;adir el bias
@@ -43,34 +43,32 @@ class Network(object):
     h = utils.sigmoid(z3)
     return a1, z2, a2, z3, h
   
-  def backProp(self, X, y):
+  def backProp(self, X, y, lmbda):
     ones = np.ones(1)
     a1, z2, a2, z3, h = self.feedForward(X)
-    m = len(X)
-    delta1 = np.zeros(self.weights[0].shape)  # (25, 401)
-    delta2 = np.zeros(self.weights[1].shape) # (10, 26)
-    output = utils.sigmoid(z3)
-    for i in range(m):
-      a1i = a1[i, :]
-      z2i = z2[i, :]
-      a2i = a2[i, :]
-      hi = h[i, :]
-      outputi = output[i, :]
-      yi = y[i, :]
+    print(a1.shape, z2.shape, a2.shape, z3.shape, h.shape)
+    m = X.shape[0]
+    delta1 = np.zeros(self.weights[0].shape)  # (3, 6)
+    delta2 = np.zeros(self.weights[1].shape) # (3, 4)
+    ones = np.ones((m,1))
+    diff = h - y
+    z2 = np.hstack((ones, z2)) # (5,4)
+    d2 = np.multiply(np.dot(self.weights[1].T, diff.T).T, utils.sigmoid_prime(z2))  # (5000, 26)
+    delta1 += np.dot((d2[:, 1:]).T, a1)
+    delta2 += np.dot(diff.T, a2)
 
-      diff = outputi - y[i][np.newaxis,:]
-      z2i = np.hstack((ones, z2i))
-      print((self.weights[1].T @ diff.T).shape)
-      d2 = np.multiply(self.weights[1].T @ diff.T, utils.sigmoid_prime(z2i)[:,np.newaxis])
-      delta1 = delta1 + d2[1:,:] @ a1i[np.newaxis,:]
-      delta2 = delta2 + diff.T @ a2i[np.newaxis,:]
-        
-    delta1 /= m
-    delta2 /= m
-  
+    delta1 = delta1 / m
+    delta2 = delta2 / m
+    
+    # Añadir la regularización, pero no al bias
+    delta1[:, 1:] = delta1[:, 1:] + (self.weights[0][:, 1:] * lmbda) / m
+    delta2[:, 1:] = delta2[:, 1:] + (self.weights[1][:, 1:] * lmbda) / m
+
+    return [delta1, delta2]
+
 net = Network([5, 3, 3])
 y = np.array([[0],[1],[2],[0],[1]])
 y_d = utils.vectorized_result(y, 3)
 x = np.array([[1,2,3,4,5],[2,3,5,4,8],[8,8,9,8,4],[1,5,8,6,9],[1,5,6,8,9]])
 print(net.Cost(x, y_d, 1))
-net.backProp(x,y_d)
+net.backProp(x,y_d, 0.5)
