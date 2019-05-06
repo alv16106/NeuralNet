@@ -1,5 +1,6 @@
 import numpy as np
 import utils
+import data
 
 class Network(object):
 
@@ -10,20 +11,24 @@ class Network(object):
     # Inicialización random de pesos
     self.weights = [np.random.randn(y, x+1)
       for x, y in zip(shape[:-1], shape[1:])]
-  
-  def GD(x, y, tetha, alpha, cost, derivative_cost, max_iter = 10000):
+
+  def GD(self, x, y, alpha, max_iter = 10000, treshold = 0.001):
     iterations = 0
-    derivative = 10000
-    current_tetha = tetha
-    while((iterations < max_iter) and (derivative != 0)):
-      current_cost = cost(x, y, current_tetha)
-      current_tetha = current_tetha - (alpha * derivative_cost(x, y, current_tetha))
-      derivative = abs(cost(x, y, current_tetha) - current_cost)
+    current_cost = 100000
+    # Llegamos a las iteraciones maximas o nuestro costo es mas peque;o que el threshold
+    while((iterations < max_iter) and (current_cost > treshold)):
+      current_cost, deltas = self.backProp(x, y, alpha)
+      # Actualizamos pesos
+      self.weights[0] = self.weights[0] - (alpha * deltas[0])
+      self.weights[1] = self.weights[1] - (alpha * deltas[1])
+      s = np.concatenate((np.ravel(deltas[0]), np.ravel(deltas[1])))
+      current_cost = np.linalg.norm(s)
       iterations += 1
+      print('Iteration' + str(iterations))
+    return self.weights
   
-  def Cost(self, X, y, lmbda):
+  def Cost(self, h, y, lmbda):
     m = len(y)
-    a1, z2, a2, z3, h = self.feedForward(X)
     # Funcion de costo y*log(h) - (1-y)*log(1-h)
     J = (np.multiply(-y, np.log(h)) - np.multiply((1 - y), np.log(1 - h))).sum() / m
     # Tomar en cuenta el learning rate + lmda/2m * suma de thetas^2
@@ -42,11 +47,15 @@ class Network(object):
     # Sacar la hipotesis
     h = utils.sigmoid(z3)
     return a1, z2, a2, z3, h
+
+  def predict(self, X):
+    h = self.feedForward(X)[4]
+    return h
   
   def backProp(self, X, y, lmbda):
     ones = np.ones(1)
     a1, z2, a2, z3, h = self.feedForward(X)
-    print(a1.shape, z2.shape, a2.shape, z3.shape, h.shape)
+    J = self.Cost(h,y,lmbda)
     m = X.shape[0]
     delta1 = np.zeros(self.weights[0].shape)  # (3, 6)
     delta2 = np.zeros(self.weights[1].shape) # (3, 4)
@@ -64,11 +73,15 @@ class Network(object):
     delta1[:, 1:] = delta1[:, 1:] + (self.weights[0][:, 1:] * lmbda) / m
     delta2[:, 1:] = delta2[:, 1:] + (self.weights[1][:, 1:] * lmbda) / m
 
-    return [delta1, delta2]
+    return J, [delta1, delta2]
 
-net = Network([5, 3, 3])
-y = np.array([[0],[1],[2],[0],[1]])
+net = Network([784, 25, 10])
+""" y = np.array([[0],[1],[2],[0],[1]])
+print(y.shape)
 y_d = utils.vectorized_result(y, 3)
 x = np.array([[1,2,3,4,5],[2,3,5,4,8],[8,8,9,8,4],[1,5,8,6,9],[1,5,6,8,9]])
-print(net.Cost(x, y_d, 1))
-net.backProp(x,y_d, 0.5)
+# print(net.Cost(x, y_d, 1)) """
+x, y, test = data.load_data(1000, 10)
+y_d = utils.vectorized_result(y, 10)
+net.GD(x, y_d, 1, 300, 0.01)
+print(net.predict(test)[0])

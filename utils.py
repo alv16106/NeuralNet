@@ -9,5 +9,5 @@ def sigmoid_prime(z):
 def vectorized_result(y, labels): 
   result = np.zeros((len(y), labels))
   for index, j in enumerate(y):  
-    result[index][j] = 1.0 
+    result[index][int(j)] = 1.0 
   return result
