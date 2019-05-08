@@ -1,6 +1,7 @@
 import numpy as np
 import utils
 import data
+import pickle
 
 class Network(object):
 
@@ -75,13 +76,10 @@ class Network(object):
 
     return J, [delta1, delta2]
 
-net = Network([784, 25, 10])
-""" y = np.array([[0],[1],[2],[0],[1]])
-print(y.shape)
-y_d = utils.vectorized_result(y, 3)
-x = np.array([[1,2,3,4,5],[2,3,5,4,8],[8,8,9,8,4],[1,5,8,6,9],[1,5,6,8,9]])
-# print(net.Cost(x, y_d, 1)) """
-x, y, test = data.load_data(1000, 10)
+net = Network([784, 100, 10])
+x, y, test, y_t = data.load_data(2000, 200)
+print(test.shape)
 y_d = utils.vectorized_result(y, 10)
-net.GD(x, y_d, 1, 300, 0.01)
-print(net.predict(test)[0])
+weights = net.GD(x, y_d, 1, 300, 0.01)
+print(utils.get_accuracy(net.predict(test), y_t))
+pickle.dump(weights, open('weights.npy', "wb"))

@@ -1,16 +1,19 @@
 from tkinter import *
 from tkinter.colorchooser import askcolor
-
+import numpy as np
 from PIL import ImageTk, Image, ImageDraw
 import PIL
+import neuralNet
+import utils
+import data
 
 
 class Paint(object):
 
-    DEFAULT_PEN_SIZE = 5.0
+    DEFAULT_PEN_SIZE = 16.0
     DEFAULT_COLOR = 'black'
 
-    def __init__(self):
+    def __init__(self, net):
         self.root = Tk()
 
         self.eraser_button = Button(self.root, text='eraser', command=self.use_eraser)
@@ -19,13 +22,14 @@ class Paint(object):
         self.save_button = Button(self.root, text='save', command=self.save_drawing)
         self.save_button.grid(row=0, column=2)
 
-        self.choose_size_button = Scale(self.root, from_=1, to=10, orient=HORIZONTAL)
+        self.choose_size_button = Scale(self.root, from_=16, to=20, orient=HORIZONTAL)
         self.choose_size_button.grid(row=0, column=4)
 
         self.c = Canvas(self.root, bg='white', width=560, height=560)
         self.c.grid(row=1, columnspan=5)
         self.image1 = PIL.Image.new("RGB", (560, 560), 'white')
         self.draw = ImageDraw.Draw(self.image1)
+        self.net = net
         self.setup()
         self.root.mainloop()
 
@@ -38,16 +42,14 @@ class Paint(object):
         self.c.bind('<B1-Motion>', self.paint)
         self.c.bind('<ButtonRelease-1>', self.reset)
 
-    def choose_color(self):
-        self.eraser_on = False
-        self.color = askcolor(color=self.color)[1]
-
     def use_eraser(self):
-        self.activate_button(self.eraser_button, eraser_mode=True)
+        self.activate_button(self.eraser_button, eraser_mode=not self.eraser_on)
 
     def save_drawing(self):
         filename = "image.bmp"
-        self.image1.save(filename)
+        js = np.ravel(self.image1.convert('L').resize((28,28)))
+        js = abs(js - 255).reshape((1,784))
+        print(np.argmax(self.net.predict(js)[0]))
         self.activate_button(self.save_button)
 
     def activate_button(self, some_button, eraser_mode=False):
@@ -70,4 +72,9 @@ class Paint(object):
 
 
 if __name__ == '__main__':
-    Paint()
+    net = neuralNet.Network([784, 25, 10])
+    x, y, test, y_t = data.load_data(1000, 150)
+    y_d = utils.vectorized_result(y, 10)
+    net.GD(x, y_d, 1, 150, 0.01)
+    print(utils.get_accuracy(net.predict(test), y_t))
+    Paint(net)
