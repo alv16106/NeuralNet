@@ -14,7 +14,6 @@ def vectorized_result(y, labels):
 
 def get_accuracy(h, y):
   correct = 0
-  print(h.shape)
   for result, actual in zip(h, y):
     correct += actual == np.argmax(result)
   return correct/h.shape[0]

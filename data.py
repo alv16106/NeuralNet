@@ -76,10 +76,11 @@ def load_data(training_size, test_size):
     mickeys[:test_index]
   ))
 
-  train, test, y, y_t = train_test_split(data, y, test_size=0.1, random_state = 0)
+  train, test, y, y_t = train_test_split(data, y, test_size=0.2, random_state = 0)
+  test, cv, y_t, y_cv = train_test_split(test, y_t, test_size=0.5, random_state = 0)
 
   print(train.shape, test.shape)
   # Zero centering
   data -= np.mean(data, axis = 0)
 
-  return train, y, test, y_t
+  return train, y, test, y_t, cv, y_cv

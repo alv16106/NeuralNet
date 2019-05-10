@@ -18,7 +18,7 @@ class Network(object):
     current_cost = 100000
     # Llegamos a las iteraciones maximas o nuestro costo es mas peque;o que el threshold
     while((iterations < max_iter) and (current_cost > treshold)):
-      current_cost, deltas = self.backProp(x, y, alpha)
+      current_cost, deltas = self.backProp(x, y, 10)
       # Actualizamos pesos
       self.weights[0] = self.weights[0] - (alpha * deltas[0])
       self.weights[1] = self.weights[1] - (alpha * deltas[1])
@@ -53,6 +53,9 @@ class Network(object):
     h = self.feedForward(X)[4]
     return h
   
+  def loadWeights(self, new_weights):
+    self.weights = new_weights
+
   def backProp(self, X, y, lmbda):
     ones = np.ones(1)
     a1, z2, a2, z3, h = self.feedForward(X)
@@ -77,9 +80,24 @@ class Network(object):
     return J, [delta1, delta2]
 
 net = Network([784, 100, 10])
-x, y, test, y_t = data.load_data(2000, 200)
+x, y, test, y_t, cv, y_cv = data.load_data(2000, 200)
 print(test.shape)
 y_d = utils.vectorized_result(y, 10)
-weights = net.GD(x, y_d, 1, 300, 0.01)
+weights = net.GD(x, y_d, 1, 20, 0.39)
+print('Test accuracy')
 print(utils.get_accuracy(net.predict(test), y_t))
-pickle.dump(weights, open('weights.npy', "wb"))
+print('CV accuracy')
+print(utils.get_accuracy(net.predict(cv), y_cv))
+
+pickle.dump(weights, open('weights2.npy', "wb"))
+""" x, y, test, y_t, cv, y_cv = data.load_data(2000, 200)
+net = Network([784, 25, 10])
+weights = np.load('weights4.npy', allow_pickle=True)
+net.loadWeights(weights)
+y_d = utils.vectorized_result(y, 10)
+net.GD(x, y_d, 1, 300, 0.1)
+print('Test accuracy')
+print(utils.get_accuracy(net.predict(test), y_t))
+print('CV accuracy')
+print(utils.get_accuracy(net.predict(cv), y_cv))
+pickle.dump(weights, open('weights5.npy', "wb")) """
